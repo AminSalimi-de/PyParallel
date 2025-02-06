@@ -1,25 +1,55 @@
+import concurrent.futures
 import multiprocessing.process
 import time 
 import multiprocessing
+import concurrent
 
 def do_something(seconds):
     print(f"Sleeping for {seconds}(s)...")
     time.sleep(seconds)
     print(f"DONE sleeping...")
 
-start = time.perf_counter()    
-
 num_processes = 10
 
-processes = []
-for _ in range(num_processes):
-    process = multiprocessing.Process(target=do_something, args=[1])
-    process.start()
-    processes.append(process)
+def run_manual_multiprocessing():    
+    start = time.perf_counter()   
 
-for p in processes:
-    p.join()
+    processes = []
+    for _ in range(num_processes):
+        process = multiprocessing.Process(target=do_something, args=[1])
+        process.start()
+        processes.append(process)
 
-end = time.perf_counter()
+    for p in processes:
+        p.join()
 
-print(f"Finished in {end-start}(s)")
+    end = time.perf_counter()
+
+    print(f"Finished in {end-start}(s)")
+
+
+def run_with_process_pool_submit():
+    start = time.perf_counter()    
+
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        [executor.submit(do_something, 1) for _ in range(num_processes)]
+
+    end = time.perf_counter()
+
+    print(f"Finished in {end-start}(s)")
+
+def run_with_process_pool_map():
+    start = time.perf_counter()    
+
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        seconds_list = [1 for _ in range(num_processes)]
+        executor.map(do_something, seconds_list) 
+
+    end = time.perf_counter()
+
+    print(f"Finished in {end-start}(s)")
+
+
+#run_manual_multiprocessing()
+run_with_process_pool_submit()
+run_with_process_pool_map()
